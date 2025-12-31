@@ -1,0 +1,99 @@
+{
+  "name": "issues",
+  "type": "object",
+  "required": [
+    "repositoryId",
+    "repoOwner",
+    "repoName",
+    "issueType",
+    "severity",
+    "title",
+    "description",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "repositoryId": {
+      "bsonType": "string",
+      "description": "Reference to repositories collection"
+    },
+    "repoOwner": {
+      "bsonType": "string",
+      "description": "Repository owner username"
+    },
+    "repoName": {
+      "bsonType": "string",
+      "description": "Repository name"
+    },
+    "repoUrl": {
+      "bsonType": "string",
+      "description": "Full repository URL"
+    },
+    "issueType": {
+      "bsonType": "string",
+      "enum": [
+        "performance",
+        "bug",
+        "security",
+        "ci-failure",
+        "code-smell",
+        "dependency"
+      ],
+      "description": "Type of issue detected"
+    },
+    "severity": {
+      "bsonType": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "description": "Issue severity level"
+    },
+    "title": {
+      "bsonType": "string",
+      "description": "Issue title"
+    },
+    "description": {
+      "bsonType": "string",
+      "description": "Detailed issue description"
+    },
+    "filePath": {
+      "bsonType": "string",
+      "description": "File path where issue was detected"
+    },
+    "lineNumber": {
+      "bsonType": "int",
+      "description": "Line number of the issue"
+    },
+    "detectedBy": {
+      "bsonType": "string",
+      "description": "Agent that detected the issue (Analyzer, etc.)"
+    },
+    "status": {
+      "bsonType": "string",
+      "enum": [
+        "detected",
+        "analyzing",
+        "fix-proposed",
+        "pr-created",
+        "resolved",
+        "ignored"
+      ],
+      "description": "Current status of the issue"
+    },
+    "aiConfidence": {
+      "bsonType": "double",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "AI confidence score (0-1)"
+    },
+    "createdAt": {
+      "bsonType": "string",
+      "title": "datetime",
+      "description": "Issue detection timestamp"
+    },
+    "updatedAt": {
+      "bsonType": "string",
+      "title": "datetime",
+      "description": "Last update timestamp"
+    }
+  }
+}

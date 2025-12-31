@@ -1,0 +1,81 @@
+{
+  "name": "pullrequests",
+  "type": "object",
+  "required": [
+    "repositoryId",
+    "issueId",
+    "prNumber",
+    "title",
+    "status",
+    "branch",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "repositoryId": {
+      "bsonType": "string",
+      "description": "Reference to repositories collection"
+    },
+    "issueId": {
+      "bsonType": "string",
+      "description": "Reference to issues collection"
+    },
+    "prNumber": {
+      "bsonType": "int",
+      "description": "Pull request number from GitHub/GitLab"
+    },
+    "title": {
+      "bsonType": "string",
+      "description": "Pull request title"
+    },
+    "description": {
+      "bsonType": "string",
+      "description": "Pull request description"
+    },
+    "branch": {
+      "bsonType": "string",
+      "description": "Branch name (ai/fix-{issue-id})"
+    },
+    "status": {
+      "bsonType": "string",
+      "enum": ["open", "merged", "closed", "rejected"],
+      "description": "Pull request status"
+    },
+    "prUrl": {
+      "bsonType": "string",
+      "description": "GitHub/GitLab PR URL"
+    },
+    "filesChanged": {
+      "bsonType": "int",
+      "description": "Number of files changed"
+    },
+    "linesAdded": {
+      "bsonType": "int",
+      "description": "Lines of code added"
+    },
+    "linesDeleted": {
+      "bsonType": "int",
+      "description": "Lines of code deleted"
+    },
+    "reviewStatus": {
+      "bsonType": "string",
+      "enum": ["pending", "approved", "changes-requested", "rejected"],
+      "description": "Human review status"
+    },
+    "createdAt": {
+      "bsonType": "string",
+      "title": "datetime",
+      "description": "PR creation timestamp"
+    },
+    "updatedAt": {
+      "bsonType": "string",
+      "title": "datetime",
+      "description": "Last update timestamp"
+    },
+    "mergedAt": {
+      "bsonType": "string",
+      "title": "datetime",
+      "description": "PR merge timestamp"
+    }
+  }
+}

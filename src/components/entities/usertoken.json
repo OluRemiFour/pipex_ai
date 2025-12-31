@@ -1,0 +1,48 @@
+{
+  "name": "usertokens",
+  "type": "object",
+  "required": ["userId", "platform", "accessToken", "createdAt"],
+  "properties": {
+    "userId": {
+      "bsonType": "string",
+      "description": "Lumi user ID who owns this token"
+    },
+    "platform": {
+      "bsonType": "string",
+      "enum": ["GitHub", "GitLab"],
+      "description": "Git platform name"
+    },
+    "accessToken": {
+      "bsonType": "string",
+      "description": "Encrypted OAuth access token for the platform"
+    },
+    "refreshToken": {
+      "bsonType": "string",
+      "description": "Optional refresh token for token renewal"
+    },
+    "tokenType": {
+      "bsonType": "string",
+      "description": "Token type (e.g., Bearer)"
+    },
+    "scope": {
+      "bsonType": "string",
+      "description": "OAuth scopes granted"
+    },
+    "expiresAt": {
+      "bsonType": "date",
+      "description": "Token expiration timestamp"
+    },
+    "githubUsername": {
+      "bsonType": "string",
+      "description": "GitHub username associated with this token"
+    },
+    "createdAt": {
+      "bsonType": "date",
+      "description": "Token creation timestamp"
+    },
+    "updatedAt": {
+      "bsonType": "date",
+      "description": "Last token update timestamp"
+    }
+  }
+}
