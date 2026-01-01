@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -12,10 +11,11 @@ import {
   Loader2,
   XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import apiClient from "../lib/api";
+import { lumi } from "../lib/lumi";
+import process from "process";
 
-// Types (keep your existing interfaces)
 interface Repository {
   _id: string;
   repoName: string;
@@ -67,7 +67,6 @@ interface AuditLog {
 }
 
 export default function DashboardPage() {
-  // ==================== STATE VARIABLES ====================
   const [user, setUser] = useState<unknown>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -89,7 +88,12 @@ export default function DashboardPage() {
   const [issueSeverityFilter, setIssueSeverityFilter] = useState<string>("all");
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
 
-  // ==================== UTILITY FUNCTIONS ====================
+  useEffect(() => {
+    checkAuth();
+    checkGitHubConnection();
+    autoCleanupDummyData();
+  }, []);
+
   const showToast = (type: "success" | "error" | "info", message: string) => {
     const id = Date.now().toString();
     setToasts((prev) => [...prev, { id, type, message }]);
@@ -98,76 +102,131 @@ export default function DashboardPage() {
     }, 5000);
   };
 
-  // ==================== AUTH & DATA FETCHING ====================
-  useEffect(() => {
-    const initializeDashboard = async () => {
-      setLoading(true);
-      try {
-        // Check for OAuth callback token
-        const token = new URLSearchParams(window.location.search).get("token");
-        if (token) {
-          apiClient.setToken(token);
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-        }
+  const autoCleanupDummyData = async () => {
+    try {
+      await lumi.functions.invoke("cleanup-dummy-data", {
+        method: "POST",
+      });
+      console.log("Auto-cleanup completed");
+    } catch (error) {
+      console.error("Auto-cleanup failed:", error);
+    }
+  };
 
-        // Get current user
-        const { user } = await apiClient.getCurrentUser();
-        setUser(user);
+  const checkGitHubConnection = async () => {
+    try {
+      const tokens = await lumi.entities.usertokens.list({
+        filter: { userId: lumi.auth.user?.userId, platform: "GitHub" },
+        limit: 1,
+      });
+      setGithubConnected(tokens.list.length > 0);
+    } catch (error) {
+      console.error("Failed to check GitHub connection:", error);
+    }
+  };
 
-        // Check GitHub connection status
-        try {
-          const { isConnected } = await apiClient.getGitHubStatus();
-          setGithubConnected(isConnected);
-        } catch (error) {
-          console.log("GitHub not connected yet");
-        }
-
-        // Fetch all data
-        await fetchAllData();
-      } catch (error) {
-        console.error("Authentication failed:", error);
-        window.location.href = "/";
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeDashboard();
-  }, []);
+  const checkAuth = async () => {
+    const currentUser = lumi.auth.user;
+    if (!currentUser) {
+      // If not logged in, redirect to home
+      window.location.href = "/";
+      return;
+    }
+    setUser(currentUser);
+    await fetchAllData();
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch repositories
-      const reposData = await apiClient.getRepositories();
-      setRepositories(reposData.repositories);
+      const userId = lumi.auth.user?.userId;
+      if (!userId) return;
 
-      // TODO: Uncomment when backend endpoints are ready
-      // const issuesData = await apiClient.getRepositoryIssues();
-      // const prsData = await apiClient.getPullRequests();
-      // setIssues(issuesData.issues);
-      // setPullRequests(prsData.pullRequests);
-    } catch (error: any) {
+      // Fetch user's repositories first
+      const reposData = await lumi.entities.repositories.list({
+        filter: { userId },
+        sort: { createdAt: -1 },
+        limit: 50,
+      });
+      const userRepoIds = reposData.list.map((r) => r._id);
+
+      // Fetch issues and PRs scoped to user's repos
+      const [issuesData, prsData, logsData] = await Promise.all([
+        lumi.entities.issues.list({
+          filter: { repositoryId: { $in: userRepoIds } },
+          sort: { createdAt: -1 },
+          limit: 50,
+        }),
+        lumi.entities.pullrequests.list({
+          filter: { repositoryId: { $in: userRepoIds } },
+          sort: { createdAt: -1 },
+          limit: 50,
+        }),
+        lumi.entities.auditlogs.list({
+          filter: { userId },
+          sort: { timestamp: -1 },
+          limit: 50,
+        }),
+      ]);
+
+      setRepositories(reposData.list);
+      setIssues(issuesData.list);
+      setPullRequests(prsData.list);
+      setAuditLogs(logsData.list);
+
+      // Auto-sync PR statuses from GitHub
+      syncAllPRStatuses(prsData.list, reposData.list);
+    } catch (error) {
       console.error("Failed to fetch data:", error);
-      showToast("error", error.message || "Failed to fetch data");
     } finally {
       setLoading(false);
     }
   };
 
-  // ==================== EVENT HANDLERS ====================
+  const syncAllPRStatuses = async (prs: PullRequest[], repos: Repository[]) => {
+    try {
+      for (const pr of prs) {
+        if (pr.status === "open") {
+          const repo = repos.find((r) => r._id === pr.repositoryId);
+          if (repo) {
+            await lumi.functions.invoke("sync-pr-status", {
+              method: "POST",
+              body: {
+                prNumber: pr.prNumber,
+                repoOwner: repo.repoOwner,
+                repoName: repo.repoName,
+                prId: pr._id,
+              },
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to sync PR statuses:", error);
+    }
+  };
+
   const handleConnectGitHub = async () => {
     setConnecting(true);
     try {
-      await apiClient.connectGitHub();
-      // User will be redirected to GitHub OAuth
-    } catch (error: any) {
+      const result = await lumi.functions.invoke("github-oauth", {
+        method: "GET",
+        query: { action: "authorize" },
+      });
+      console.log("OAuth result:", result);
+      if (result.redirectUrl) {
+        console.log("Redirecting to:", result.redirectUrl);
+        // Open GitHub OAuth in new tab to avoid iframe CSP issues
+        window.open(result.redirectUrl, "_blank");
+        setConnecting(false);
+      } else {
+        console.error("No redirectUrl in response:", result);
+        showToast("error", "Failed to get GitHub authorization URL");
+        setConnecting(false);
+      }
+    } catch (error) {
       console.error("Failed to connect GitHub:", error);
-      showToast("error", error.message || "Failed to connect GitHub");
+      showToast("error", `GitHub connection failed: ${error.message || error}`);
       setConnecting(false);
     }
   };
@@ -175,11 +234,13 @@ export default function DashboardPage() {
   const handleSyncGitHub = async () => {
     setSyncing(true);
     try {
-      await fetchAllData(); // This will sync repos
-      showToast("success", "Repositories synced successfully");
-    } catch (error: any) {
+      const result = await lumi.functions.invoke("github-repos", {
+        method: "POST",
+      });
+      console.log("Sync result:", result);
+      await fetchAllData();
+    } catch (error) {
       console.error("Failed to sync GitHub:", error);
-      showToast("error", error.message || "Failed to sync repositories");
     } finally {
       setSyncing(false);
     }
@@ -188,19 +249,40 @@ export default function DashboardPage() {
   const handleAnalyzeRepo = async (repoId: string, repoName: string) => {
     setAnalyzing(repoId);
     try {
-      // TODO: Uncomment when backend endpoint is ready
-      // const result = await apiClient.analyzeRepository(repoId);
-      // console.log("Analysis result:", result);
-      // showToast("success", `Analysis complete! Found ${result.issuesFound || 0} issues`);
+      // Find the repository
+      const repo = repositories.find((r) => r._id === repoId);
+      if (!repo) {
+        showToast("error", "Repository not found");
+        return;
+      }
 
-      // For now, simulate analysis
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      showToast("info", "Analysis engine coming soon!");
+      // Call Analyzer Agent
+      const result = await lumi.functions.invoke("analyze-repo", {
+        method: "POST",
+        body: {
+          repositoryId: repoId,
+          repoOwner: repo.repoOwner,
+          repoName: repo.repoName,
+          repoUrl: repo.repoUrl,
+        },
+      });
 
-      await fetchAllData(); // Refresh data
-    } catch (error: any) {
+      console.log("Analysis result:", result);
+
+      if (result.error) {
+        showToast("error", `Analysis failed: ${result.error}`);
+      } else {
+        showToast(
+          "success",
+          `Analysis complete! Found ${result.issuesFound || 0} issues`
+        );
+      }
+
+      // Refresh data to show new issues
+      await fetchAllData();
+    } catch (error) {
       console.error("Failed to analyze repository:", error);
-      showToast("error", error.message || "Failed to analyze repository");
+      showToast("error", `Analysis error: ${error.message || error}`);
     } finally {
       setAnalyzing(null);
     }
@@ -209,23 +291,88 @@ export default function DashboardPage() {
   const handleFixIssue = async (issue: Issue) => {
     setFixingIssue(issue._id);
     try {
-      // TODO: Implement when backend endpoints are ready
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      showToast("info", "Fix generation coming soon!");
-    } catch (error: any) {
+      // Validate issue has required fields
+      if (!issue.filePath) {
+        showToast("error", "Cannot fix: Issue missing file path information");
+        return;
+      }
+
+      // Get repository details
+      const repo = repositories.find((r) => r._id === issue.repositoryId);
+      if (!repo) {
+        showToast("error", "Repository not found");
+        return;
+      }
+
+      // Step 1: Generate Fix
+      console.log("🔧 Step 1: Generating fix...");
+      const fixResult = await lumi.functions.invoke("generate-fix", {
+        method: "POST",
+        body: {
+          issueId: issue._id,
+          repoOwner: repo.repoOwner,
+          repoName: repo.repoName,
+          filePath: issue.filePath,
+          issueDescription: issue.description,
+        },
+      });
+
+      console.log("Fix generated:", fixResult);
+
+      if (fixResult.error) {
+        showToast("error", `Fix generation failed: ${fixResult.error}`);
+        return;
+      }
+
+      // Step 2: Create PR with the fix
+      console.log("📤 Step 2: Creating Pull Request...");
+      const prResult = await lumi.functions.invoke("create-pull-request", {
+        method: "POST",
+        body: {
+          repoOwner: repo.repoOwner,
+          repoName: repo.repoName,
+          filePath: issue.filePath,
+          fixedCode: fixResult.fixedCode,
+          prTitle: `🤖 AI Fix: ${issue.title}`,
+          prBody: `## AI-Generated Fix\n\n**Issue**: ${issue.title}\n**Severity**: ${issue.severity}\n**Type**: ${issue.issueType}\n\n### Description\n${issue.description}\n\n### Changes\n- Fixed code issues in \`${issue.filePath}\`\n- Lines changed: ${fixResult.stats?.originalLines} → ${fixResult.stats?.fixedLines} (${fixResult.stats?.changePercent}% change)\n\n### AI Analysis\nThis fix was automatically generated and reviewed by AI DevOps agents.\n\n---\n*Generated by AI DevOps Engineer*`,
+          issueId: issue._id,
+        },
+      });
+
+      console.log("PR created:", prResult);
+
+      if (prResult.error) {
+        showToast("error", `PR creation failed: ${prResult.error}`);
+        return;
+      }
+
+      // Update issue status
+      await lumi.entities.issues.update(issue._id, {
+        status: "pr-created",
+        updatedAt: new Date().toISOString(),
+      });
+
+      showToast(
+        "success",
+        `Pull Request #${prResult.pr.number} created successfully! View on GitHub.`
+      );
+      window.open(prResult.pr.url, "_blank");
+
+      // Refresh data
+      await fetchAllData();
+    } catch (error) {
       console.error("Failed to fix issue:", error);
-      showToast("error", error.message || "Failed to fix issue");
+      showToast("error", `Fix issue error: ${error.message || error}`);
     } finally {
       setFixingIssue(null);
     }
   };
 
   const handleSignOut = () => {
-    apiClient.logout();
+    lumi.auth.signOut();
     window.location.href = "/";
   };
 
-  // ==================== HELPER FUNCTIONS ====================
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "CRITICAL":
@@ -260,7 +407,6 @@ export default function DashboardPage() {
     }
   };
 
-  // ==================== STATS CALCULATION ====================
   const stats = {
     totalRepos: repositories.length,
     activeRepos: repositories.filter((r) => r.isActive).length,
@@ -273,7 +419,6 @@ export default function DashboardPage() {
     ).length,
   };
 
-  // ==================== RENDER LOGIC ====================
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
@@ -336,7 +481,7 @@ export default function DashboardPage() {
                   Dashboard
                 </h1>
                 <p className="text-slate-400">
-                  Welcome back, {user?.name || user?.email || "Developer"}
+                  Welcome back, {user?.userName || "Developer"}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">

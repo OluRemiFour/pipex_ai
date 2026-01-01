@@ -166,7 +166,7 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {[
-              { name: "DevOpsAI", tagline: "Your AI DevOps Engineer" },
+              { name: "PipexAI", tagline: "Your AI DevOps Engineer" },
               {
                 name: "PipelineGuard",
                 tagline: "Autonomous CI/CD Optimization",
@@ -197,7 +197,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">
-              Why Engineering Teams Choose DevOpsAI
+              Why Engineering Teams Choose PipexAI
             </h2>
             <p className="text-xl text-slate-400">
               Real engineering expertise, zero hallucinations, complete control
@@ -423,9 +423,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center text-slate-500 text-sm">
-          <p>
-            © 2024 DevOpsAI. Built for engineers who value safety and speed.
-          </p>
+          <p>© 2024 PipexAI. Built for engineers who value safety and speed.</p>
         </div>
       </footer>
 

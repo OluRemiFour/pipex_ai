@@ -177,7 +177,7 @@ export default function ConnectRepoModal({
                 </form>
 
                 <p className="text-xs text-slate-500 text-center mt-4">
-                  By connecting, you agree to allow DevOpsAI to read your
+                  By connecting, you agree to allow PipexAI to read your
                   repository and open pull requests.
                 </p>
               </>

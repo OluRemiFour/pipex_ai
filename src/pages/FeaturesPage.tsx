@@ -298,7 +298,7 @@ export default function FeaturesPage() {
           {/* Anti-Patterns */}
           <section>
             <h2 className="text-3xl font-bold text-white mb-8">
-              What DevOpsAI Does NOT Do
+              What PipexAI Does NOT Do
             </h2>
 
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-8">
