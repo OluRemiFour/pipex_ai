@@ -255,33 +255,11 @@ export default function Navbar() {
     }
   };
 
-  // const handleGoogleLogin = () => {
-  //   const apiBaseUrl =
-  //     import.meta.env.VITE_API_BASE_URL ||
-  //     "https://pipex-ai-backend.onrender.com";
-  //   window.location.href = `${apiBaseUrl}/api/auth/google`;
-  // };
-
   const handleGoogleLogin = () => {
     const apiBaseUrl =
       import.meta.env.VITE_API_BASE_URL ||
       "https://pipex-ai-backend.onrender.com";
-
-    // TEMPORARY: Direct backend URL with proper redirect
-    const redirectUri = encodeURIComponent(
-      `${apiBaseUrl}/api/auth/google/callback`
-    );
-    const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Get from .env
-
-    // Manually construct Google OAuth URL
-    window.location.href =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}` +
-      `&redirect_uri=${redirectUri}` +
-      `&response_type=code` +
-      `&scope=profile email` +
-      `&access_type=offline` +
-      `&prompt=consent`;
+    window.location.href = `${apiBaseUrl}/api/auth/google`;
   };
 
   const handleLogout = async () => {
