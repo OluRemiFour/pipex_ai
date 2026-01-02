@@ -209,7 +209,6 @@
 
 // src/lib/api.js - UPDATED VERSION
 
-
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://pipex-ai-backend.onrender.com";
 
@@ -365,6 +364,13 @@ class ApiClient {
     return this.request("/api/repositories");
   }
 
+  // Sync all repositories from GitHub
+  syncRepositories() {
+    return this.request("/api/repositories/sync", {
+      method: "POST",
+    });
+  }
+
   // Sync single repository
   syncRepository(owner, repo) {
     return this.request(`/api/repositories/${owner}/${repo}/sync`, {
@@ -380,6 +386,12 @@ class ApiClient {
     });
   }
 
+  // Delete repository
+  deleteRepository(repoId) {
+    return this.request(`/api/repositories/${repoId}`, {
+      method: "DELETE",
+    });
+  }
   // ========== DEBUG ENDPOINTS ==========
 
   // Test if backend is accessible

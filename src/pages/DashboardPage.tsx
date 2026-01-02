@@ -186,6 +186,47 @@ export default function DashboardPage() {
     }
   };
 
+  // const handleSyncGitHub = async () => {
+  //   console.log("🔄 Starting GitHub sync...");
+  //   setSyncing(true);
+
+  //   try {
+  //     if (!githubConnected) {
+  //       showToast("error", "Please connect GitHub first");
+  //       setSyncing(false);
+  //       return;
+  //     }
+
+  //     const repoCount = await fetchAllData();
+  //     showToast("success", `Successfully synced ${repoCount} repositories`);
+  //     console.log("✅ GitHub sync completed");
+  //   } catch (error: any) {
+  //     console.error("❌ Failed to sync GitHub:", error);
+
+  //     if (
+  //       error.message.includes("401") ||
+  //       error.message.includes("Session expired")
+  //     ) {
+  //       showToast("error", "Session expired. Please login again.");
+  //       localStorage.removeItem("auth_token");
+  //       setTimeout(() => {
+  //         window.location.href = "/";
+  //       }, 2000);
+  //     } else if (
+  //       error.message.includes("Network") ||
+  //       error.message.includes("Failed to fetch")
+  //     ) {
+  //       showToast("error", "Network error. Please check your connection.");
+  //     } else {
+  //       showToast("error", error.message || "Failed to sync repositories");
+  //     }
+  //   } finally {
+  //     setSyncing(false);
+  //   }
+  // };
+
+  // REPLACE handleSyncGitHub in DashboardPage.tsx
+
   const handleSyncGitHub = async () => {
     console.log("🔄 Starting GitHub sync...");
     setSyncing(true);
@@ -197,9 +238,30 @@ export default function DashboardPage() {
         return;
       }
 
-      const repoCount = await fetchAllData();
-      showToast("success", `Successfully synced ${repoCount} repositories`);
-      console.log("✅ GitHub sync completed");
+      // Call the sync endpoint
+      const result = await apiClient.syncRepositories();
+
+      console.log("✅ Sync result:", result);
+
+      // Update local state
+      if (result.repositories) {
+        setRepositories(result.repositories);
+      }
+
+      const syncCount = result.synced || result.repositories?.length || 0;
+      showToast(
+        "success",
+        `Successfully synced ${syncCount} repositories from GitHub!`
+      );
+
+      // Show warning if there were errors
+      if (result.errors && result.errors.length > 0) {
+        console.warn("⚠️ Some repos had sync errors:", result.errors);
+        showToast(
+          "info",
+          `${result.errors.length} repositories had sync issues`
+        );
+      }
     } catch (error: any) {
       console.error("❌ Failed to sync GitHub:", error);
 
@@ -212,6 +274,9 @@ export default function DashboardPage() {
         setTimeout(() => {
           window.location.href = "/";
         }, 2000);
+      } else if (error.message.includes("GitHub not connected")) {
+        showToast("error", "GitHub connection lost. Please reconnect.");
+        setGithubConnected(false);
       } else if (
         error.message.includes("Network") ||
         error.message.includes("Failed to fetch")
