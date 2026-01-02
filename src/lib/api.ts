@@ -2,25 +2,26 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:9000";
 
+// In src/lib/api.js - FIXED VERSION
 class ApiClient {
   constructor() {
     this.baseUrl = API_BASE_URL;
     this.token = localStorage.getItem("auth_token");
   }
 
-  // Set authentication token
   setToken(token) {
+    console.log("✅ Setting token in localStorage");
     this.token = token;
     localStorage.setItem("auth_token", token);
   }
 
-  // Remove token (logout)
+  // REMOVE or FIX clearToken method
   clearToken() {
+    console.log("⚠️ Manual logout called");
     this.token = null;
     localStorage.removeItem("auth_token");
   }
 
-  // Generic request method
   async request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -41,20 +42,14 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // Handle unauthorized (token expired)
-      if (response.status === 401) {
-        this.clearToken();
-        window.location.href = "/login";
-        throw new Error("Session expired. Please login again.");
-      }
-
-      const data = await response.json();
-
+      // DON'T automatically clear token on 401
+      // Let the component handle it
       if (!response.ok) {
-        throw new Error(data.error || `API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
-      return data;
+      return await response.json();
     } catch (error) {
       console.error(`API request failed: ${endpoint}`, error);
       throw error;
