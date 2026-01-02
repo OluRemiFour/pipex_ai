@@ -18,6 +18,7 @@ export default function AuthCallback() {
       }
 
       if (token) {
+        localStorage.setItem("auth_token", token);
         // Token will be stored by apiClient when Dashboard loads
         navigate("/dashboard");
       } else {
