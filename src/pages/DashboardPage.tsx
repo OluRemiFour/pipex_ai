@@ -233,10 +233,31 @@ export default function DashboardPage() {
 
     try {
       if (!githubConnected) {
-        showToast("error", "Please connect GitHub first");
-        setSyncing(false);
-        return;
+        console.log("⚠️ GitHub not connected, checking connection status...");
+
+        // Debug: Check actual connection status
+        try {
+          const debugInfo = await apiClient.debugGitHubConnection();
+          console.log("🔍 GitHub connection debug:", debugInfo.debug);
+
+          if (!debugInfo.debug.isGitHubConnected) {
+            showToast("error", "Please connect GitHub first");
+            setSyncing(false);
+            return;
+          } else {
+            // Connection exists but state is wrong, update it
+            console.log("✅ GitHub is connected, updating state");
+            setGithubConnected(true);
+          }
+        } catch (debugError) {
+          console.error("❌ Debug failed:", debugError);
+          showToast("error", "Please connect GitHub first");
+          setSyncing(false);
+          return;
+        }
       }
+
+      console.log("🔄 Calling sync endpoint...");
 
       // Call the sync endpoint
       const result = await apiClient.syncRepositories();
@@ -249,10 +270,15 @@ export default function DashboardPage() {
       }
 
       const syncCount = result.synced || result.repositories?.length || 0;
-      showToast(
-        "success",
-        `Successfully synced ${syncCount} repositories from GitHub!`
-      );
+
+      if (syncCount === 0) {
+        showToast("info", "No repositories found in your GitHub account");
+      } else {
+        showToast(
+          "success",
+          `Successfully synced ${syncCount} repositories from GitHub!`
+        );
+      }
 
       // Show warning if there were errors
       if (result.errors && result.errors.length > 0) {

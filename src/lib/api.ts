@@ -392,6 +392,10 @@ class ApiClient {
       method: "DELETE",
     });
   }
+
+  debugGitHubConnection() {
+    return this.request("/api/auth/github/debug");
+  }
   // ========== DEBUG ENDPOINTS ==========
 
   // Test if backend is accessible
