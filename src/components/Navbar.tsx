@@ -220,89 +220,65 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   checkAuthStatus();
-
-  //   // Check for OAuth callback token in URL
-  //   const token = new URLSearchParams(window.location.search).get("token");
-  //   if (token) {
-  //     apiClient.setToken(token);
-  //     // Clean URL
-  //     window.history.replaceState({}, document.title, window.location.pathname);
-  //     checkAuthStatus();
-  //   }
-  // }, []);
-
-  // const checkAuthStatus = async () => {
-  //   const token = localStorage.getItem("auth_token");
-
-  //   if (token) {
-  //     try {
-  //       // Verify token with backend
-  //       const { user } = await apiClient.getCurrentUser();
-  //       setIsAuthenticated(true);
-  //       setUser(user);
-  //     } catch (error) {
-  //       // Token is invalid or expired
-  //       console.error("Auth check failed:", error);
-  //       localStorage.removeItem("auth_token");
-  //       setIsAuthenticated(false);
-  //       setUser(null);
-  //     }
-  //   } else {
-  //     setIsAuthenticated(false);
-  //     setUser(null);
-  //   }
-  // };
-
-  // In Navbar.tsx - Updated useEffect
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const token = localStorage.getItem("auth_token");
-
-      if (token) {
-        try {
-          // Verify token with backend
-          const { user } = await apiClient.getCurrentUser();
-          setIsAuthenticated(true);
-          setUser(user);
-        } catch (error) {
-          console.error("Auth check failed:", error);
-          localStorage.removeItem("auth_token");
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-      } else {
-        setIsAuthenticated(false);
-        setUser(null);
-      }
-    };
-
-    // Check auth on initial load
     checkAuthStatus();
 
     // Check for OAuth callback token in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) {
+      apiClient.setToken(token);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      checkAuthStatus();
+    }
+  }, []);
+
+  // Add this at the END of your Navbar useEffect
+  // Check auth status more frequently for a few seconds after mount
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        apiClient
+          .getCurrentUser()
+          .then(({ user }) => {
+            setIsAuthenticated(true);
+            setUser(user);
+          })
+          .catch(() => {
+            setIsAuthenticated(false);
+            setUser(null);
+          });
+      }
+    }, 500);
+
+    // Stop checking after 5 seconds
+    setTimeout(() => clearInterval(checkInterval), 5000);
+
+    return () => clearInterval(checkInterval);
+  }, []);
+
+  const checkAuthStatus = async () => {
+    const token = localStorage.getItem("auth_token");
 
     if (token) {
-      // Store the token
-      apiClient.setToken(token);
-
-      // Clean URL immediately
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Force a re-check of auth status
-      setTimeout(() => {
-        checkAuthStatus();
-      }, 100); // Small delay to ensure token is stored
+      try {
+        // Verify token with backend
+        const { user } = await apiClient.getCurrentUser();
+        setIsAuthenticated(true);
+        setUser(user);
+      } catch (error) {
+        // Token is invalid or expired
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("auth_token");
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    } else {
+      setIsAuthenticated(false);
+      setUser(null);
     }
-
-    // Set up interval to check auth status (handles async token storage)
-    const intervalId = setInterval(checkAuthStatus, 2000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+  };
 
   const handleGoogleLogin = () => {
     const apiBaseUrl =

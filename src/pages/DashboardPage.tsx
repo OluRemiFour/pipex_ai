@@ -99,47 +99,6 @@ export default function DashboardPage() {
   };
 
   // ==================== AUTH & DATA FETCHING ====================
-
-  // useEffect(() => {
-  //   const initializeDashboard = async () => {
-  //     setLoading(true);
-  //     try {
-  //       // Check for OAuth callback token
-  //       const token = new URLSearchParams(window.location.search).get("token");
-  //       if (token) {
-  //         apiClient.setToken(token);
-  //         window.history.replaceState(
-  //           {},
-  //           document.title,
-  //           window.location.pathname
-  //         );
-  //       }
-
-  //       // Get current user
-  //       const { user } = await apiClient.getCurrentUser();
-  //       setUser(user);
-
-  //       // Check GitHub connection status
-  //       try {
-  //         const { isConnected } = await apiClient.getGitHubStatus();
-  //         setGithubConnected(isConnected);
-  //       } catch (error) {
-  //         console.log("GitHub not connected yet");
-  //       }
-
-  //       // Fetch all data
-  //       await fetchAllData();
-  //     } catch (error) {
-  //       console.error("Authentication failed:", error);
-  //       window.location.href = "/";
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   initializeDashboard();
-  // }, []);
-
   useEffect(() => {
     const initializeDashboard = async () => {
       setLoading(true);
@@ -148,7 +107,6 @@ export default function DashboardPage() {
         const token = new URLSearchParams(window.location.search).get("token");
         if (token) {
           apiClient.setToken(token);
-          // Clean URL
           window.history.replaceState(
             {},
             document.title,
@@ -172,7 +130,6 @@ export default function DashboardPage() {
         await fetchAllData();
       } catch (error) {
         console.error("Authentication failed:", error);
-        // If auth fails, redirect to home
         window.location.href = "/";
       } finally {
         setLoading(false);
