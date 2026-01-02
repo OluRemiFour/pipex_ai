@@ -67,7 +67,6 @@ interface AuditLog {
 }
 
 export default function DashboardPage() {
-  // ==================== STATE VARIABLES ====================
   const [user, setUser] = useState<unknown>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -89,7 +88,7 @@ export default function DashboardPage() {
   const [issueSeverityFilter, setIssueSeverityFilter] = useState<string>("all");
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
 
-  // ==================== UTILITY FUNCTIONS ====================
+  // ==================== 2. UTILITY FUNCTIONS ====================
   const showToast = (type: "success" | "error" | "info", message: string) => {
     const id = Date.now().toString();
     setToasts((prev) => [...prev, { id, type, message }]);
@@ -98,248 +97,6 @@ export default function DashboardPage() {
     }, 5000);
   };
 
-  // ==================== AUTH & DATA FETCHING ====================
-  useEffect(() => {
-    const initializeDashboard = async () => {
-      setLoading(true);
-      try {
-        // Check for OAuth callback token (from Google login)
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get("token");
-
-        if (token) {
-          console.log("📥 Dashboard: Found token in URL, storing...");
-          apiClient.setToken(token);
-          // Clean URL but preserve other params
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete("token");
-          window.history.replaceState(
-            {},
-            document.title,
-            newUrl.pathname + newUrl.search
-          );
-        }
-
-        // Check for GitHub connection success
-        const githubConnected = urlParams.get("github_connected");
-        const githubUsername = urlParams.get("username");
-
-        if (githubConnected === "true") {
-          console.log("✅ GitHub connected successfully:", githubUsername);
-          showToast("success", `GitHub connected as @${githubUsername}`);
-          setGithubConnected(true);
-
-          // Clean URL
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete("github_connected");
-          newUrl.searchParams.delete("username");
-          window.history.replaceState(
-            {},
-            document.title,
-            newUrl.pathname + newUrl.search
-          );
-        }
-
-        // Check for errors
-        const error = urlParams.get("error");
-        if (error) {
-          const errorMessage = urlParams.get("message") || error;
-          console.error("❌ Callback error:", errorMessage);
-          showToast("error", `Error: ${errorMessage.replace(/_/g, " ")}`);
-
-          // Clean URL
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete("error");
-          newUrl.searchParams.delete("message");
-          window.history.replaceState(
-            {},
-            document.title,
-            newUrl.pathname + newUrl.search
-          );
-        }
-
-        // Check if we have a token at all
-        const storedToken = localStorage.getItem("auth_token");
-        if (!storedToken) {
-          console.error("❌ No auth token found");
-          window.location.href = "/";
-          return;
-        }
-
-        console.log("🔐 Dashboard: Token exists, fetching user...");
-
-        // Get current user
-        const { user } = await apiClient.getCurrentUser();
-        console.log("✅ User fetched:", user.email);
-        setUser(user);
-
-        // Check GitHub connection status
-        try {
-          const { isConnected } = await apiClient.getGitHubStatus();
-          setGithubConnected(isConnected);
-          console.log("✅ GitHub connection status:", isConnected);
-        } catch (error) {
-          console.log("ℹ️ GitHub not connected yet");
-        }
-
-        // Fetch repositories
-        const reposData = await apiClient.getRepositories();
-        setRepositories(reposData.repositories);
-        console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
-      } catch (error: any) {
-        console.error("❌ Dashboard initialization failed:", error);
-
-        if (
-          error.message.includes("Network error") ||
-          error.message.includes("Failed to fetch")
-        ) {
-          showToast("error", "Cannot connect to server. Please try again.");
-        } else if (
-          error.message.includes("Session expired") ||
-          error.message.includes("401")
-        ) {
-          localStorage.removeItem("auth_token");
-          window.location.href = "/";
-        } else {
-          showToast("error", error.message || "Failed to load dashboard");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeDashboard();
-  }, []);
-
-  // ==================== EVENT HANDLERS ====================
-  // In DashboardPage.tsx - Update handleConnectGitHub
-  // const handleConnectGitHub = async () => {
-  //   console.log("🔐 handleConnectGitHub called");
-
-  //   setConnecting(true);
-  //   try {
-  //     // Get token from localStorage
-  //     const token = localStorage.getItem("auth_token");
-
-  //     if (!token) {
-  //       console.error("❌ No auth token found");
-  //       showToast("error", "Please login first");
-  //       window.location.href = "/";
-  //       return;
-  //     }
-
-  //     console.log("✅ Token found, length:", token.length);
-
-  //     // Construct GitHub OAuth URL with token
-  //     const apiBaseUrl =
-  //       import.meta.env.VITE_API_BASE_URL ||
-  //       "https://pipex-ai-backend.onrender.com";
-  //     const githubUrl = `${apiBaseUrl}/api/auth/github/connect?token=${encodeURIComponent(
-  //       token
-  //     )}`;
-
-  //     console.log("🌐 Redirecting to:", githubUrl);
-
-  //     // Redirect to GitHub OAuth
-  //     window.location.href = githubUrl;
-  //   } catch (error: any) {
-  //     console.error("❌ Failed to connect GitHub:", error);
-  //     showToast("error", error.message || "Failed to connect GitHub");
-  //     setConnecting(false);
-  //   }
-  // };
-
-  const handleConnectGitHub = async () => {
-    console.log("🔄 Starting GitHub connection...");
-    setConnecting(true);
-
-    try {
-      // Get token from localStorage
-      const token = localStorage.getItem("auth_token");
-
-      if (!token) {
-        console.error("❌ No auth token found in localStorage");
-        showToast("error", "Please login first");
-        window.location.href = "/";
-        return;
-      }
-
-      console.log("✅ Token found, initiating GitHub OAuth");
-
-      // FIXED: Pass token as query parameter
-      const apiBaseUrl =
-        import.meta.env.VITE_API_BASE_URL ||
-        "https://pipex-ai-backend.onrender.com";
-
-      // Encode the token to handle special characters
-      const encodedToken = encodeURIComponent(token);
-      const githubUrl = `${apiBaseUrl}/api/auth/github/connect?token=${encodedToken}`;
-
-      console.log("🌐 Redirecting to:", githubUrl);
-
-      // Redirect to GitHub OAuth with token in URL
-      window.location.href = githubUrl;
-    } catch (error: any) {
-      console.error("❌ Failed to connect GitHub:", error);
-      showToast("error", error.message || "Failed to connect GitHub");
-      setConnecting(false);
-    }
-  };
-
-  const handleSyncGitHub = async () => {
-    setSyncing(true);
-    try {
-      await fetchAllData(); // This will sync repos
-      showToast("success", "Repositories synced successfully");
-    } catch (error: any) {
-      console.error("Failed to sync GitHub:", error);
-      showToast("error", error.message || "Failed to sync repositories");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleAnalyzeRepo = async (repoId: string, repoName: string) => {
-    setAnalyzing(repoId);
-    try {
-      // TODO: Uncomment when backend endpoint is ready
-      // const result = await apiClient.analyzeRepository(repoId);
-      // console.log("Analysis result:", result);
-      // showToast("success", `Analysis complete! Found ${result.issuesFound || 0} issues`);
-
-      // For now, simulate analysis
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      showToast("info", "Analysis engine coming soon!");
-
-      await fetchAllData(); // Refresh data
-    } catch (error: any) {
-      console.error("Failed to analyze repository:", error);
-      showToast("error", error.message || "Failed to analyze repository");
-    } finally {
-      setAnalyzing(null);
-    }
-  };
-
-  const handleFixIssue = async (issue: Issue) => {
-    setFixingIssue(issue._id);
-    try {
-      // TODO: Implement when backend endpoints are ready
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      showToast("info", "Fix generation coming soon!");
-    } catch (error: any) {
-      console.error("Failed to fix issue:", error);
-      showToast("error", error.message || "Failed to fix issue");
-    } finally {
-      setFixingIssue(null);
-    }
-  };
-
-  const handleSignOut = () => {
-    apiClient.logout();
-    window.location.href = "/";
-  };
-
-  // ==================== HELPER FUNCTIONS ====================
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "CRITICAL":
@@ -374,6 +131,257 @@ export default function DashboardPage() {
     }
   };
 
+  // ==================== 3. DATA FETCHING FUNCTIONS ====================
+  // IMPORTANT: Define this BEFORE event handlers that use it
+  const fetchAllData = async () => {
+    try {
+      console.log("🔄 Fetching all data...");
+
+      const reposData = await apiClient.getRepositories();
+      setRepositories(reposData.repositories);
+      console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
+
+      // TODO: Uncomment when backend endpoints are ready
+      // const issuesData = await apiClient.getRepositoryIssues();
+      // const prsData = await apiClient.getPullRequests();
+      // setIssues(issuesData.issues);
+      // setPullRequests(prsData.pullRequests);
+
+      return reposData.repositories.length;
+    } catch (error: any) {
+      console.error("❌ Failed to fetch data:", error);
+      throw error;
+    }
+  };
+
+  // ==================== 4. EVENT HANDLERS ====================
+  const handleConnectGitHub = async () => {
+    console.log("🔄 Starting GitHub connection...");
+    setConnecting(true);
+
+    try {
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        console.error("❌ No auth token found in localStorage");
+        showToast("error", "Please login first");
+        window.location.href = "/";
+        return;
+      }
+
+      console.log("✅ Token found, initiating GitHub OAuth");
+
+      const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL ||
+        "https://pipex-ai-backend.onrender.com";
+      const encodedToken = encodeURIComponent(token);
+      const githubUrl = `${apiBaseUrl}/api/auth/github/connect?token=${encodedToken}`;
+
+      console.log("🌐 Redirecting to:", githubUrl);
+      window.location.href = githubUrl;
+    } catch (error: any) {
+      console.error("❌ Failed to connect GitHub:", error);
+      showToast("error", error.message || "Failed to connect GitHub");
+      setConnecting(false);
+    }
+  };
+
+  const handleSyncGitHub = async () => {
+    console.log("🔄 Starting GitHub sync...");
+    setSyncing(true);
+
+    try {
+      if (!githubConnected) {
+        showToast("error", "Please connect GitHub first");
+        setSyncing(false);
+        return;
+      }
+
+      const repoCount = await fetchAllData();
+      showToast("success", `Successfully synced ${repoCount} repositories`);
+      console.log("✅ GitHub sync completed");
+    } catch (error: any) {
+      console.error("❌ Failed to sync GitHub:", error);
+
+      if (
+        error.message.includes("401") ||
+        error.message.includes("Session expired")
+      ) {
+        showToast("error", "Session expired. Please login again.");
+        localStorage.removeItem("auth_token");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+      } else if (
+        error.message.includes("Network") ||
+        error.message.includes("Failed to fetch")
+      ) {
+        showToast("error", "Network error. Please check your connection.");
+      } else {
+        showToast("error", error.message || "Failed to sync repositories");
+      }
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleAnalyzeRepo = async (repoId: string, repoName: string) => {
+    console.log("🔍 Analyzing repository:", repoName);
+    setAnalyzing(repoId);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      showToast("info", `Analysis engine for "${repoName}" coming soon!`);
+      await fetchAllData();
+    } catch (error: any) {
+      console.error("❌ Failed to analyze repository:", error);
+      showToast("error", error.message || "Failed to analyze repository");
+    } finally {
+      setAnalyzing(null);
+    }
+  };
+
+  const handleFixIssue = async (issue: Issue) => {
+    console.log("🔧 Fixing issue:", issue.title);
+    setFixingIssue(issue._id);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      showToast("info", "AI fix generation coming soon!");
+    } catch (error: any) {
+      console.error("❌ Failed to fix issue:", error);
+      showToast("error", error.message || "Failed to fix issue");
+    } finally {
+      setFixingIssue(null);
+    }
+  };
+
+  const handleSignOut = async () => {
+    console.log("👋 Signing out...");
+
+    try {
+      await apiClient.logout();
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+    } finally {
+      localStorage.removeItem("auth_token");
+      window.location.href = "/";
+    }
+  };
+
+  // // ==================== 5. STATS CALCULATION ====================
+  // const stats = {
+  //   totalRepos: repositories.length,
+  //   activeRepos: repositories.filter((r) => r.isActive).length,
+  //   openIssues: issues.filter(
+  //     (i) => i.status !== "resolved" && i.status !== "ignored"
+  //   ).length,
+  //   openPRs: pullRequests.filter((pr) => pr.status === "open").length,
+  //   criticalIssues: issues.filter(
+  //     (i) => i.severity === "CRITICAL" && i.status !== "resolved"
+  //   ).length,
+  // };
+
+  // ==================== 6. EFFECTS ====================
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      setLoading(true);
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
+
+        if (token) {
+          console.log("📥 Dashboard: Found token in URL, storing...");
+          apiClient.setToken(token);
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete("token");
+          window.history.replaceState(
+            {},
+            document.title,
+            newUrl.pathname + newUrl.search
+          );
+        }
+
+        const githubConnectedParam = urlParams.get("github_connected");
+        const githubUsername = urlParams.get("username");
+
+        if (githubConnectedParam === "true") {
+          console.log("✅ GitHub connected successfully:", githubUsername);
+          showToast("success", `GitHub connected as @${githubUsername}!`);
+          setGithubConnected(true);
+
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete("github_connected");
+          newUrl.searchParams.delete("username");
+          window.history.replaceState(
+            {},
+            document.title,
+            newUrl.pathname + newUrl.search
+          );
+        }
+
+        const error = urlParams.get("error");
+        if (error) {
+          const errorMessage = urlParams.get("message") || error;
+          console.error("❌ Callback error:", errorMessage);
+          showToast("error", `Error: ${errorMessage.replace(/_/g, " ")}`);
+
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete("error");
+          newUrl.searchParams.delete("message");
+          window.history.replaceState(
+            {},
+            document.title,
+            newUrl.pathname + newUrl.search
+          );
+        }
+
+        const storedToken = localStorage.getItem("auth_token");
+        if (!storedToken) {
+          console.error("❌ No auth token found");
+          window.location.href = "/";
+          return;
+        }
+
+        console.log("🔐 Dashboard: Token exists, fetching user...");
+
+        const { user } = await apiClient.getCurrentUser();
+        console.log("✅ User fetched:", user.email);
+        setUser(user);
+
+        try {
+          const { isConnected } = await apiClient.getGitHubStatus();
+          setGithubConnected(isConnected);
+          console.log("✅ GitHub connection status:", isConnected);
+        } catch (error) {
+          console.log("ℹ️ GitHub not connected yet");
+        }
+
+        await fetchAllData();
+      } catch (error: any) {
+        console.error("❌ Dashboard initialization failed:", error);
+
+        if (
+          error.message.includes("Network error") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          showToast("error", "Cannot connect to server. Please try again.");
+        } else if (
+          error.message.includes("Session expired") ||
+          error.message.includes("401")
+        ) {
+          localStorage.removeItem("auth_token");
+          window.location.href = "/";
+        } else {
+          showToast("error", error.message || "Failed to load dashboard");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+  }, []);
   // ==================== STATS CALCULATION ====================
   const stats = {
     totalRepos: repositories.length,
