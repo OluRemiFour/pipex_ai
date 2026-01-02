@@ -451,27 +451,30 @@ class ApiClient {
     return this.request(`/api/pull-requests/stats/${repositoryId}`);
   }
 
+  // ========== AUDIT LOGS ENDPOINTS ==========
+
+  // Get audit logs
+  getAuditLogs(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/api/audit${query ? `?${query}` : ""}`);
+  }
+
+  // Get audit stats
+  getAuditStats(repositoryId) {
+    const query = repositoryId ? `?repositoryId=${repositoryId}` : "";
+    return this.request(`/api/audit/stats${query}`);
+  }
+
+  // Get single audit log
+  getAuditLog(logId) {
+    return this.request(`/api/audit/${logId}`);
+  }
+
   // ========== DEBUG ENDPOINTS ==========
 
   // Debug GitHub connection
   debugGitHubConnection() {
     return this.request("/api/auth/github/debug");
-  }
-  // ========== DEBUG ENDPOINTS ==========
-
-  // Test if backend is accessible
-  testBackend() {
-    return this.request("/health");
-  }
-
-  // Test auth endpoint
-  testAuth() {
-    return this.request("/api/auth/me");
-  }
-
-  // Get debug config
-  getDebugConfig() {
-    return this.request("/api/auth/debug/config");
   }
 }
 

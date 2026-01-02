@@ -153,6 +153,11 @@ export default function DashboardPage() {
         `✅ Fetched ${prsData.pullRequests?.length || 0} pull requests`
       );
 
+      // Fetch audit logs
+      const auditData = await apiClient.getAuditLogs({ limit: 50 });
+      setAuditLogs(auditData.logs || []);
+      console.log(`✅ Fetched ${auditData.logs?.length || 0} audit logs`);
+
       return reposData.repositories.length;
     } catch (error: any) {
       console.error("❌ Failed to fetch data:", error);
@@ -334,12 +339,19 @@ export default function DashboardPage() {
 
       console.log("✅ Analysis result:", result);
 
-      showToast(
-        "success",
-        `Analysis complete! Found ${result.issuesFound} issues (${result.critical} critical)`
-      );
+      if (result.issuesFound === 0) {
+        showToast(
+          "info",
+          `Analysis complete! No issues found in ${repoName}. This could mean the code is clean or the AI needs more context.`
+        );
+      } else {
+        showToast(
+          "success",
+          `Analysis complete! Found ${result.issuesFound} issues (${result.critical} critical)`
+        );
+      }
 
-      // Refresh all data to show new issues
+      // Refresh all data to show new issues and audit logs
       await fetchAllData();
     } catch (error: any) {
       console.error("❌ Failed to analyze repository:", error);
@@ -366,7 +378,7 @@ export default function DashboardPage() {
         `Fix created! PR #${result.prNumber} is ready for review`
       );
 
-      // Refresh data to update issue and PR lists
+      // Refresh data to update issue, PR lists, and audit logs
       await fetchAllData();
 
       // Switch to PRs tab to show the new PR
