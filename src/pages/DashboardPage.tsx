@@ -132,20 +132,26 @@ export default function DashboardPage() {
   };
 
   // ==================== 3. DATA FETCHING FUNCTIONS ====================
-  // IMPORTANT: Define this BEFORE event handlers that use it
   const fetchAllData = async () => {
     try {
       console.log("🔄 Fetching all data...");
 
+      // Fetch repositories
       const reposData = await apiClient.getRepositories();
       setRepositories(reposData.repositories);
       console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
 
-      // TODO: Uncomment when backend endpoints are ready
-      // const issuesData = await apiClient.getRepositoryIssues();
-      // const prsData = await apiClient.getPullRequests();
-      // setIssues(issuesData.issues);
-      // setPullRequests(prsData.pullRequests);
+      // Fetch issues
+      const issuesData = await apiClient.getIssues();
+      setIssues(issuesData.issues || []);
+      console.log(`✅ Fetched ${issuesData.issues?.length || 0} issues`);
+
+      // Fetch pull requests
+      const prsData = await apiClient.getPullRequests();
+      setPullRequests(prsData.pullRequests || []);
+      console.log(
+        `✅ Fetched ${prsData.pullRequests?.length || 0} pull requests`
+      );
 
       return reposData.repositories.length;
     } catch (error: any) {
@@ -321,8 +327,19 @@ export default function DashboardPage() {
     setAnalyzing(repoId);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      showToast("info", `Analysis engine for "${repoName}" coming soon!`);
+      showToast("info", `Starting analysis of ${repoName}...`);
+
+      // Call analysis endpoint
+      const result = await apiClient.analyzeRepository(repoId);
+
+      console.log("✅ Analysis result:", result);
+
+      showToast(
+        "success",
+        `Analysis complete! Found ${result.issuesFound} issues (${result.critical} critical)`
+      );
+
+      // Refresh all data to show new issues
       await fetchAllData();
     } catch (error: any) {
       console.error("❌ Failed to analyze repository:", error);
@@ -337,11 +354,26 @@ export default function DashboardPage() {
     setFixingIssue(issue._id);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      showToast("info", "AI fix generation coming soon!");
+      showToast("info", "Generating fix and creating pull request...");
+
+      // Call fix endpoint
+      const result = await apiClient.fixIssue(issue._id);
+
+      console.log("✅ Fix result:", result);
+
+      showToast(
+        "success",
+        `Fix created! PR #${result.prNumber} is ready for review`
+      );
+
+      // Refresh data to update issue and PR lists
+      await fetchAllData();
+
+      // Switch to PRs tab to show the new PR
+      setActiveTab("prs");
     } catch (error: any) {
       console.error("❌ Failed to fix issue:", error);
-      showToast("error", error.message || "Failed to fix issue");
+      showToast("error", error.message || "Failed to generate fix");
     } finally {
       setFixingIssue(null);
     }
@@ -359,19 +391,6 @@ export default function DashboardPage() {
       window.location.href = "/";
     }
   };
-
-  // // ==================== 5. STATS CALCULATION ====================
-  // const stats = {
-  //   totalRepos: repositories.length,
-  //   activeRepos: repositories.filter((r) => r.isActive).length,
-  //   openIssues: issues.filter(
-  //     (i) => i.status !== "resolved" && i.status !== "ignored"
-  //   ).length,
-  //   openPRs: pullRequests.filter((pr) => pr.status === "open").length,
-  //   criticalIssues: issues.filter(
-  //     (i) => i.severity === "CRITICAL" && i.status !== "resolved"
-  //   ).length,
-  // };
 
   // ==================== 6. EFFECTS ====================
   useEffect(() => {

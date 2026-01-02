@@ -393,6 +393,67 @@ class ApiClient {
     });
   }
 
+  // ========== ISSUES ENDPOINTS ==========
+
+  // Analyze repository
+  analyzeRepository(repositoryId) {
+    return this.request(`/api/issues/analyze/${repositoryId}`, {
+      method: "POST",
+    });
+  }
+
+  // Get all issues
+  getIssues(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/api/issues${query ? `?${query}` : ""}`);
+  }
+
+  // Get single issue
+  getIssue(issueId) {
+    return this.request(`/api/issues/${issueId}`);
+  }
+
+  // Fix issue (generate fix and create PR)
+  fixIssue(issueId) {
+    return this.request(`/api/issues/${issueId}/fix`, {
+      method: "POST",
+    });
+  }
+
+  // Update issue status
+  updateIssue(issueId, data) {
+    return this.request(`/api/issues/${issueId}`, {
+      method: "PATCH",
+      body: data,
+    });
+  }
+
+  // Get issue stats
+  getIssueStats(repositoryId) {
+    return this.request(`/api/issues/stats/${repositoryId}`);
+  }
+
+  // ========== PULL REQUESTS ENDPOINTS ==========
+
+  // Get all pull requests
+  getPullRequests(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/api/pull-requests${query ? `?${query}` : ""}`);
+  }
+
+  // Get single PR
+  getPullRequest(prId) {
+    return this.request(`/api/pull-requests/${prId}`);
+  }
+
+  // Get PR stats
+  getPRStats(repositoryId) {
+    return this.request(`/api/pull-requests/stats/${repositoryId}`);
+  }
+
+  // ========== DEBUG ENDPOINTS ==========
+
+  // Debug GitHub connection
   debugGitHubConnection() {
     return this.request("/api/auth/github/debug");
   }
