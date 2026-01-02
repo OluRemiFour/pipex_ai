@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import apiClient from "../lib/api"; // Import your API client
+import apiClient from "../lib/api";
 
 // In AuthCallback.tsx - SIMPLIFIED VERSION
 export default function AuthCallback() {
