@@ -140,57 +140,69 @@ export default function DashboardPage() {
   //   initializeDashboard();
   // }, []);
 
-  // In DashboardPage.tsx useEffect
+  // In DashboardPage.tsx - Update the useEffect
   useEffect(() => {
     const initializeDashboard = async () => {
       setLoading(true);
-
-      // Check backend first
       try {
-        const healthCheck = await fetch(
-          "https://pipex-ai-backend.onrender.com/health"
-        );
-        if (!healthCheck.ok) {
-          throw new Error("Backend not available");
+        // Check for OAuth callback token
+        const token = new URLSearchParams(window.location.search).get("token");
+        if (token) {
+          console.log("📥 Dashboard: Found token in URL, storing...");
+          apiClient.setToken(token);
+          // Clean URL
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
         }
-      } catch (error) {
-        console.error("Backend unavailable:", error);
-        showToast(
-          "error",
-          "Server is temporarily unavailable. Please try again."
-        );
-        setLoading(false);
-        return;
-      }
 
-      try {
+        // Check if we have a token at all
+        const storedToken = localStorage.getItem("auth_token");
+        if (!storedToken) {
+          console.error("❌ No auth token found");
+          window.location.href = "/";
+          return;
+        }
+
+        console.log("🔐 Dashboard: Token exists, fetching user...");
+
         // Get current user
         const { user } = await apiClient.getCurrentUser();
+        console.log("✅ User fetched:", user.email);
         setUser(user);
 
-        // Check GitHub connection
+        // Check GitHub connection status
         try {
           const { isConnected } = await apiClient.getGitHubStatus();
           setGithubConnected(isConnected);
         } catch (error) {
-          console.log("GitHub not connected yet");
+          console.log("ℹ️ GitHub not connected yet");
         }
 
         // Fetch repositories
         const reposData = await apiClient.getRepositories();
         setRepositories(reposData.repositories);
-      } catch (error) {
-        console.error("Dashboard init failed:", error);
+        console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
+      } catch (error: any) {
+        console.error("❌ Dashboard initialization failed:", error);
 
-        // Check if it's an auth error
+        // Don't redirect immediately for network errors
         if (
+          error.message.includes("Network error") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          showToast("error", "Cannot connect to server. Please try again.");
+        } else if (
           error.message.includes("Session expired") ||
           error.message.includes("401")
         ) {
+          // Clear token and redirect on auth errors
           localStorage.removeItem("auth_token");
           window.location.href = "/";
         } else {
-          showToast("error", "Failed to load dashboard data");
+          showToast("error", error.message || "Failed to load dashboard");
         }
       } finally {
         setLoading(false);
