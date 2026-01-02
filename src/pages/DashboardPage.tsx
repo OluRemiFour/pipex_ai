@@ -233,11 +233,31 @@ export default function DashboardPage() {
   };
 
   // ==================== EVENT HANDLERS ====================
+  // In DashboardPage.tsx - Update handleConnectGitHub
   const handleConnectGitHub = async () => {
     setConnecting(true);
     try {
-      await apiClient.connectGitHub();
-      // User will be redirected to GitHub OAuth
+      // Get the current token
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        showToast("error", "Please login first");
+        window.location.href = "/";
+        return;
+      }
+
+      console.log(
+        "🔐 Connecting GitHub with token:",
+        token.substring(0, 30) + "..."
+      );
+
+      // Pass token as query parameter to GitHub OAuth
+      const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL ||
+        "https://pipex-ai-backend.onrender.com";
+      window.location.href = `${apiBaseUrl}/api/auth/github/connect?token=${encodeURIComponent(
+        token
+      )}`;
     } catch (error: any) {
       console.error("Failed to connect GitHub:", error);
       showToast("error", error.message || "Failed to connect GitHub");

@@ -104,10 +104,21 @@ class ApiClient {
 
   // Connect GitHub account
   connectGitHub() {
-    // This will redirect to GitHub OAuth
-    window.location.href = `${this.baseUrl}/api/auth/github/connect`;
-  }
+    const token = this.token || localStorage.getItem("auth_token");
 
+    if (!token) {
+      console.error("No auth token found");
+      window.location.href = "/";
+      return;
+    }
+
+    console.log("🔗 Connecting GitHub with token");
+
+    // Pass token as query parameter
+    window.location.href = `${
+      this.baseUrl
+    }/api/auth/github/connect?token=${encodeURIComponent(token)}`;
+  }
   // Disconnect GitHub
   disconnectGitHub() {
     return this.request("/api/auth/github/disconnect", {
