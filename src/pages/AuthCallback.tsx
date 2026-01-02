@@ -4,6 +4,47 @@ import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import apiClient from "../lib/api"; // Import your API client
 
+// In AuthCallback.tsx - SIMPLIFIED VERSION
+export default function AuthCallback() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("🔐 AuthCallback: Processing OAuth callback");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+
+    console.log("🔐 Token from URL:", token ? "Present" : "Missing");
+
+    if (token) {
+      // Store token
+      localStorage.setItem("auth_token", token);
+      console.log("✅ Token stored in localStorage");
+
+      // Clear URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Wait a moment then redirect
+      setTimeout(() => {
+        console.log("🔄 Redirecting to dashboard");
+        navigate("/dashboard");
+      }, 100);
+    } else {
+      console.error("❌ No token in URL");
+      navigate("/");
+    }
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
+        <p className="text-slate-400">Completing authentication...</p>
+      </div>
+    </div>
+  );
+}
+
 // export default function AuthCallback() {
 //   const navigate = useNavigate();
 
@@ -59,44 +100,3 @@ import apiClient from "../lib/api"; // Import your API client
 //     </div>
 //   );
 // }
-
-// In AuthCallback.tsx - SIMPLIFIED VERSION
-export default function AuthCallback() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    console.log("🔐 AuthCallback: Processing OAuth callback");
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-
-    console.log("🔐 Token from URL:", token ? "Present" : "Missing");
-
-    if (token) {
-      // Store token
-      localStorage.setItem("auth_token", token);
-      console.log("✅ Token stored in localStorage");
-
-      // Clear URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Wait a moment then redirect
-      setTimeout(() => {
-        console.log("🔄 Redirecting to dashboard");
-        navigate("/dashboard");
-      }, 100);
-    } else {
-      console.error("❌ No token in URL");
-      navigate("/");
-    }
-  }, [navigate]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
-        <p className="text-slate-400">Completing authentication...</p>
-      </div>
-    </div>
-  );
-}
