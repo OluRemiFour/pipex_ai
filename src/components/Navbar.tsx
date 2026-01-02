@@ -267,13 +267,14 @@ export default function Navbar() {
       await apiClient.logout();
     } catch (error) {
       console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("auth_token");
-      setIsAuthenticated(false);
-      setUser(null);
-      setShowUserMenu(false);
-      navigate("/");
-    }
+    } 
+    // finally {
+    //   localStorage.removeItem("auth_token");
+    //   setIsAuthenticated(false);
+    //   setUser(null);
+    //   setShowUserMenu(false);
+    //   navigate("/");
+    // }
   };
 
   return (
@@ -425,7 +426,7 @@ export default function Navbar() {
                   Dashboard
                 </Link>
               )}
-              {/* <button
+              <button
                 onClick={() => {
                   if (isAuthenticated) {
                     handleLogout();
@@ -437,7 +438,7 @@ export default function Navbar() {
                 className="text-left text-slate-300 hover:text-cyan-400 transition-colors"
               >
                 {isAuthenticated ? "Sign Out" : "Sign In with Google"}
-              </button> */}
+              </button>
             </div>
           </div>
         )}
