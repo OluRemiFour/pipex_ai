@@ -99,26 +99,76 @@ export default function DashboardPage() {
   };
 
   // ==================== AUTH & DATA FETCHING ====================
+
+  // useEffect(() => {
+  //   const initializeDashboard = async () => {
+  //     setLoading(true);
+  //     try {
+  //       // Check for OAuth callback token
+  //       const token = new URLSearchParams(window.location.search).get("token");
+  //       if (token) {
+  //         apiClient.setToken(token);
+  //         window.history.replaceState(
+  //           {},
+  //           document.title,
+  //           window.location.pathname
+  //         );
+  //       }
+
+  //       // Get current user
+  //       const { user } = await apiClient.getCurrentUser();
+  //       setUser(user);
+
+  //       // Check GitHub connection status
+  //       try {
+  //         const { isConnected } = await apiClient.getGitHubStatus();
+  //         setGithubConnected(isConnected);
+  //       } catch (error) {
+  //         console.log("GitHub not connected yet");
+  //       }
+
+  //       // Fetch all data
+  //       await fetchAllData();
+  //     } catch (error) {
+  //       console.error("Authentication failed:", error);
+  //       window.location.href = "/";
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   initializeDashboard();
+  // }, []);
+
+  // In DashboardPage.tsx useEffect
   useEffect(() => {
     const initializeDashboard = async () => {
       setLoading(true);
-      try {
-        // Check for OAuth callback token
-        const token = new URLSearchParams(window.location.search).get("token");
-        if (token) {
-          apiClient.setToken(token);
-          window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-          );
-        }
 
+      // Check backend first
+      try {
+        const healthCheck = await fetch(
+          "https://pipex-ai-backend.onrender.com/health"
+        );
+        if (!healthCheck.ok) {
+          throw new Error("Backend not available");
+        }
+      } catch (error) {
+        console.error("Backend unavailable:", error);
+        showToast(
+          "error",
+          "Server is temporarily unavailable. Please try again."
+        );
+        setLoading(false);
+        return;
+      }
+
+      try {
         // Get current user
         const { user } = await apiClient.getCurrentUser();
         setUser(user);
 
-        // Check GitHub connection status
+        // Check GitHub connection
         try {
           const { isConnected } = await apiClient.getGitHubStatus();
           setGithubConnected(isConnected);
@@ -126,11 +176,22 @@ export default function DashboardPage() {
           console.log("GitHub not connected yet");
         }
 
-        // Fetch all data
-        await fetchAllData();
+        // Fetch repositories
+        const reposData = await apiClient.getRepositories();
+        setRepositories(reposData.repositories);
       } catch (error) {
-        console.error("Authentication failed:", error);
-        window.location.href = "/";
+        console.error("Dashboard init failed:", error);
+
+        // Check if it's an auth error
+        if (
+          error.message.includes("Session expired") ||
+          error.message.includes("401")
+        ) {
+          localStorage.removeItem("auth_token");
+          window.location.href = "/";
+        } else {
+          showToast("error", "Failed to load dashboard data");
+        }
       } finally {
         setLoading(false);
       }

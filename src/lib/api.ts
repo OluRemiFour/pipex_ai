@@ -1,8 +1,7 @@
 // API client for your backend
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:9000";
+  import.meta.env.VITE_API_BASE_URL || "https://pipex-ai-backend.onrender.com";
 
-// In src/lib/api.js - FIXED VERSION
 class ApiClient {
   constructor() {
     this.baseUrl = API_BASE_URL;
@@ -10,14 +9,15 @@ class ApiClient {
   }
 
   setToken(token) {
-    console.log("✅ Setting token in localStorage");
+    console.log("🔐 Setting token:", token ? "Present" : "Null");
     this.token = token;
-    localStorage.setItem("auth_token", token);
+    if (token) {
+      localStorage.setItem("auth_token", token);
+    }
   }
 
-  // REMOVE or FIX clearToken method
   clearToken() {
-    console.log("⚠️ Manual logout called");
+    console.log("🔐 Clearing token");
     this.token = null;
     localStorage.removeItem("auth_token");
   }
@@ -34,28 +34,62 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
-    const config = {
-      ...options,
-      headers,
-    };
+    console.log("🌐 API Request:", {
+      endpoint,
+      method: options.method || "GET",
+    });
 
     try {
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(10000),
+      });
 
-      // DON'T automatically clear token on 401
-      // Let the component handle it
+      console.log("📡 API Response:", {
+        endpoint,
+        status: response.status,
+        ok: response.ok,
+      });
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || `HTTP ${response.status}` };
+        }
+
+        // Don't clear token on network errors, only on 401
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error("Session expired");
+        }
+
         throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error);
+      console.error("💥 API Request Failed:", {
+        endpoint,
+        error: error.message,
+        url,
+      });
+
+      // Don't clear token on network errors
+      if (
+        error.name === "TimeoutError" ||
+        error.message.includes("Failed to fetch")
+      ) {
+        throw new Error("Network error: Cannot connect to server");
+      }
+
       throw error;
     }
   }
-
   // ========== AUTH ENDPOINTS ==========
 
   // Get current user
