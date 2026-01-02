@@ -425,7 +425,7 @@ export default function Navbar() {
                   Dashboard
                 </Link>
               )}
-              <button
+              {/* <button
                 onClick={() => {
                   if (isAuthenticated) {
                     handleLogout();
@@ -437,7 +437,7 @@ export default function Navbar() {
                 className="text-left text-slate-300 hover:text-cyan-400 transition-colors"
               >
                 {isAuthenticated ? "Sign Out" : "Sign In with Google"}
-              </button>
+              </button> */}
             </div>
           </div>
         )}
