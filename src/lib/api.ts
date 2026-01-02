@@ -103,21 +103,34 @@ class ApiClient {
   }
 
   // Connect GitHub account
+  // In api.js - FIXED connectGitHub method
   connectGitHub() {
-    const token = this.token || localStorage.getItem("auth_token");
+    // Get token from localStorage (not just this.token)
+    const token = localStorage.getItem("auth_token");
+
+    console.log("🔗 connectGitHub called");
+    console.log("🔗 Token available:", !!token);
+    console.log("🔗 this.token:", this.token ? "Set" : "Not set");
+    console.log("🔗 localStorage token:", token ? "Present" : "Missing");
 
     if (!token) {
-      console.error("No auth token found");
+      console.error("❌ No auth token found for GitHub connection");
+      showToast("error", "Please login first"); // You need to define showToast or handle this
       window.location.href = "/";
       return;
     }
 
-    console.log("🔗 Connecting GitHub with token");
+    console.log("🔗 Token length:", token.length);
+    console.log("🔗 Token preview:", token.substring(0, 30) + "...");
 
-    // Pass token as query parameter
-    window.location.href = `${
-      this.baseUrl
-    }/api/auth/github/connect?token=${encodeURIComponent(token)}`;
+    // Encode the token properly
+    const encodedToken = encodeURIComponent(token);
+    const githubUrl = `${this.baseUrl}/api/auth/github/connect?token=${encodedToken}`;
+
+    console.log("🔗 GitHub OAuth URL:", githubUrl);
+
+    // Redirect to GitHub OAuth
+    window.location.href = githubUrl;
   }
   // Disconnect GitHub
   disconnectGitHub() {
