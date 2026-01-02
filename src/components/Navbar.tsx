@@ -268,13 +268,13 @@ export default function Navbar() {
     } catch (error) {
       console.error("Logout error:", error);
     } 
-    // finally {
-    //   localStorage.removeItem("auth_token");
-    //   setIsAuthenticated(false);
-    //   setUser(null);
-    //   setShowUserMenu(false);
-    //   navigate("/");
-    // }
+    finally {
+      // localStorage.removeItem("auth_token");
+      setIsAuthenticated(false);
+      setUser(null);
+      setShowUserMenu(false);
+      // navigate("/");
+    }
   };
 
   return (
