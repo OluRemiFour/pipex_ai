@@ -262,7 +262,7 @@ class ApiClient {
     // Add Authorization header if we have a token
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
-      console.log("🔑 Adding Authorization header with token");
+      // console.log("🔑 Adding Authorization header with token");
     } else {
       console.warn("⚠️ No token available for request to:", endpoint);
     }
@@ -304,7 +304,6 @@ class ApiClient {
         throw new Error(data.error || `API error: ${response.status}`);
       }
 
-      console.log("✅ API Success:", endpoint);
       return data;
     } catch (error) {
       console.error(`❌ API request failed: ${endpoint}`, error);
