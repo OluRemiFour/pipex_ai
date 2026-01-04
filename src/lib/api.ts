@@ -469,6 +469,9 @@ class ApiClient {
     return this.request(`/api/audit/${logId}`);
   }
 
+  getUpdatedPullRequests(repositoryId) {
+    return this.request(`/api/stats/${repositoryId}`);
+  }
   // ========== DEBUG ENDPOINTS ==========
 
   // Debug GitHub connection

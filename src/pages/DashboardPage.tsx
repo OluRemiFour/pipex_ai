@@ -1441,29 +1441,29 @@ export default function DashboardPage() {
   // ==================== 3. DATA FETCHING FUNCTIONS ====================
   const fetchAllData = async () => {
     try {
-      console.log("🔄 Fetching all data...");
+      // console.log("🔄 Fetching all data...");
 
       // Fetch repositories
       const reposData = await apiClient.getRepositories();
       setRepositories(reposData.repositories);
-      console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
+      // console.log(`✅ Fetched ${reposData.repositories.length} repositories`);
 
       // Fetch issues
       const issuesData = await apiClient.getIssues();
       setIssues(issuesData.issues || []);
-      console.log(`✅ Fetched ${issuesData.issues?.length || 0} issues`);
+      // console.log(`✅ Fetched ${issuesData.issues?.length || 0} issues`);
 
       // Fetch pull requests
       const prsData = await apiClient.getPullRequests();
       setPullRequests(prsData.pullRequests || []);
-      console.log(
-        `✅ Fetched ${prsData.pullRequests?.length || 0} pull requests`
-      );
+      // console.log(
+      //   `✅ Fetched ${prsData.pullRequests?.length || 0} pull requests`
+      // );
 
       // Fetch audit logs
       const auditData = await apiClient.getAuditLogs({ limit: 50 });
       setAuditLogs(auditData.logs || []);
-      console.log(`✅ Fetched ${auditData.logs?.length || 0} audit logs`);
+      // console.log(`✅ Fetched ${auditData.logs?.length || 0} audit logs`);
 
       return reposData.repositories.length;
     } catch (error: any) {
@@ -1594,7 +1594,7 @@ export default function DashboardPage() {
   };
 
   const handleAnalyzeRepo = async (repoId: string, repoName: string) => {
-    console.log("🔍 Analyzing repository:", repoName);
+    // console.log("🔍 Analyzing repository:", repoName);
     setAnalyzing(repoId);
 
     try {
@@ -1603,7 +1603,9 @@ export default function DashboardPage() {
       // Call analysis endpoint
       const result = await apiClient.analyzeRepository(repoId);
 
-      console.log("✅ Analysis result:", result);
+      // console.log("✅ Analysis result:", result);
+      const updatePullRequest = await apiClient.getUpdatedPullRequests(repoId);
+      console.log("✅ Updated PRs after analysis:", updatePullRequest);
 
       if (result.issuesFound === 0) {
         showToast(
@@ -1628,7 +1630,7 @@ export default function DashboardPage() {
   };
 
   const handleFixIssue = async (issue: Issue) => {
-    console.log("🔧 Fixing issue:", issue.title);
+    // console.log("🔧 Fixing issue:", issue.title);
     setFixingIssue(issue._id);
 
     try {
@@ -1658,7 +1660,7 @@ export default function DashboardPage() {
   };
 
   const handleSignOut = async () => {
-    console.log("👋 Signing out...");
+    // console.log("👋 Signing out...");
 
     try {
       await apiClient.logout();
