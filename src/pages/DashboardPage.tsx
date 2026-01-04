@@ -1360,6 +1360,30 @@ export default function DashboardPage() {
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
   const [expandedAuditLog, setExpandedAuditLog] = useState<string | null>(null);
 
+  // Add this debugging useEffect
+  useEffect(() => {
+    console.log("🔍 Debug: Issues data structure:", {
+      totalIssues: issues.length,
+      firstIssue: issues[0]
+        ? {
+            id: issues[0]._id,
+            repositoryId: issues[0].repositoryId,
+            repositoryIdType: typeof issues[0].repositoryId,
+            repositoryIdIsObject: typeof issues[0].repositoryId === "object",
+            repositoryIdKeys:
+              typeof issues[0].repositoryId === "object"
+                ? Object.keys(issues[0].repositoryId)
+                : "not an object",
+          }
+        : "no issues",
+    });
+
+    console.log("🔍 Debug: Repositories data:", {
+      totalRepos: repositories.length,
+      firstRepo: repositories[0],
+    });
+  }, [issues, repositories]);
+
   // ==================== 2. UTILITY FUNCTIONS ====================
   const showToast = (type: "success" | "error" | "info", message: string) => {
     const id = Date.now().toString();
@@ -2318,9 +2342,14 @@ export default function DashboardPage() {
                                 <div className="text-sm text-slate-300 space-y-2">
                                   <div>
                                     <span className="font-semibold text-white">
-                                      Repository ID:
+                                      Repository:
                                     </span>{" "}
-                                    {issue.repositoryId}
+                                    {/* FIX: Make sure we're rendering a string, not an object */}
+                                    {typeof issue.repositoryId === "string"
+                                      ? issue.repositoryId
+                                      : JSON.stringify(
+                                          issue.repositoryId || "Unknown"
+                                        )}
                                   </div>
                                   <div>
                                     <span className="font-semibold text-white">
@@ -2374,6 +2403,29 @@ export default function DashboardPage() {
                                     </span>{" "}
                                     {new Date(issue.createdAt).toLocaleString()}
                                   </div>
+
+                                  {/* Add AI Explanation and Suggested Fix if available */}
+                                  {issue.aiExplanation && (
+                                    <div>
+                                      <span className="font-semibold text-white">
+                                        AI Explanation:
+                                      </span>{" "}
+                                      <p className="mt-1 text-slate-300">
+                                        {issue.aiExplanation}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {issue.suggestedFix && (
+                                    <div>
+                                      <span className="font-semibold text-white">
+                                        Suggested Fix:
+                                      </span>{" "}
+                                      <p className="mt-1 text-slate-300">
+                                        {issue.suggestedFix}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Fix Action Button */}
