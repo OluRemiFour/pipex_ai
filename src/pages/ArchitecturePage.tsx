@@ -13,7 +13,7 @@ import {
   Search,
   Shield,
   Wrench,
-  Zap
+  Zap,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 
@@ -554,7 +554,7 @@ export default function ArchitecturePage() {
           </section>
 
           {/* System Architecture */}
-          <section className="mb-12 sm:mb-16 md:mb-24">
+          {/* <section className="mb-12 sm:mb-16 md:mb-24">
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -696,7 +696,7 @@ export default function ArchitecturePage() {
                 </motion.div>
               ))}
             </div>
-          </section>
+          </section> */}
 
           {/* MVP Roadmap */}
           <section>

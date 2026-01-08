@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Shield,
   GitPullRequest,
@@ -13,6 +13,10 @@ import {
   GitBranch,
   X,
   Github,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Info,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { lumi } from "../lib/lumi";
@@ -24,6 +28,10 @@ export default function HomePage() {
   const [repoUrl, setRepoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [connecting, setConnecting] = useState(false);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; type: "success" | "error" | "info"; message: string }>
+  >([]);
 
   useEffect(() => {
     let index = 0;
@@ -38,12 +46,51 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
+  const showToast = (type: "success" | "error" | "info", message: string) => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
+  // const handleConnectRepo = async () => {
+  //   if (!lumi.auth.isAuthenticated) {
+  //     await lumi.auth.signIn();
+  //     return;
+  //   }
+  //   setShowRepoModal(true);
+  // };
+
   const handleConnectRepo = async () => {
-    if (!lumi.auth.isAuthenticated) {
-      await lumi.auth.signIn();
-      return;
+    console.log("🔄 Starting GitHub connection...");
+    setConnecting(true);
+
+    try {
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        console.error("❌ No auth token found in localStorage");
+        showToast("error", "Please login first");
+        window.location.href = "/";
+        return;
+      }
+
+      console.log("✅ Token found, initiating GitHub OAuth");
+
+      const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL ||
+        "https://pipex-ai-backend.onrender.com";
+      const encodedToken = encodeURIComponent(token);
+      const githubUrl = `${apiBaseUrl}/api/auth/github/connect?token=${encodedToken}`;
+
+      console.log("🌐 Redirecting to:", githubUrl);
+      window.location.href = githubUrl;
+    } catch (error: any) {
+      console.error("❌ Failed to connect GitHub:", error);
+      showToast("error", error.message || "Failed to connect GitHub");
+      setConnecting(false);
     }
-    setShowRepoModal(true);
   };
 
   const handleSubmitRepo = async (e: React.FormEvent) => {
@@ -52,27 +99,25 @@ export default function HomePage() {
 
     setLoading(true);
     try {
-      const urlParts = repoUrl.replace("https://github.com/", "").split("/");
-      const owner = urlParts[0];
-      const name = urlParts[1];
-
-      await lumi.entities.repositories.create({
-        userId: lumi.auth.user?.userId || "",
-        repoName: name,
-        repoOwner: owner,
-        repoUrl: repoUrl,
-        platform: "github",
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        defaultBranch: "main",
-        language: "TypeScript",
-        framework: "React",
-      });
-
-      setShowRepoModal(false);
-      setRepoUrl("");
-      navigate("/dashboard");
+      // const urlParts = repoUrl.replace("https://github.com/", "").split("/");
+      // const owner = urlParts[0];
+      // const name = urlParts[1];
+      // await lumi.entities.repositories.create({
+      //   userId: lumi.auth.user?.userId || "",
+      //   repoName: name,
+      //   repoOwner: owner,
+      //   repoUrl: repoUrl,
+      //   platform: "github",
+      //   isActive: true,
+      //   createdAt: new Date().toISOString(),
+      //   updatedAt: new Date().toISOString(),
+      //   defaultBranch: "main",
+      //   language: "TypeScript",
+      //   framework: "React",
+      // });
+      // setShowRepoModal(false);
+      // setRepoUrl("");
+      // navigate("/dashboard");
     } catch (error) {
       console.error("Error connecting repository:", error);
       alert("Failed to connect repository. Please try again.");
@@ -84,6 +129,42 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       <Navbar />
+
+      {/* Toast Notifications */}
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: -50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -50, x: "-50%" }}
+            className="fixed top-20 left-1/2 z-50 max-w-md w-full"
+          >
+            <div
+              className={`mx-4 p-4 rounded-lg shadow-2xl border ${
+                toast.type === "success"
+                  ? "bg-emerald-900/90 border-emerald-500 text-emerald-100"
+                  : toast.type === "error"
+                  ? "bg-red-900/90 border-red-500 text-red-100"
+                  : "bg-cyan-900/90 border-cyan-500 text-cyan-100"
+              } backdrop-blur-sm`}
+            >
+              <div className="flex items-center gap-3">
+                {toast.type === "success" && (
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                )}
+                {toast.type === "error" && (
+                  <XCircle className="w-5 h-5 flex-shrink-0" />
+                )}
+                {toast.type === "info" && (
+                  <Info className="w-5 h-5 flex-shrink-0" />
+                )}
+                <p className="text-sm font-medium">{toast.message}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
@@ -149,9 +230,15 @@ export default function HomePage() {
               </Link>
               <button
                 onClick={handleConnectRepo}
+                disabled={connecting}
                 className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors"
               >
-                Connect Repository
+                {connecting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <GitBranch className="w-4 h-4" />
+                )}
+                {connecting ? "Connecting..." : " Connect Repository"}
               </button>
             </div>
           </motion.div>
@@ -423,7 +510,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-slate-800">
         <div className="max-w-6xl mx-auto text-center text-slate-500 text-sm">
-          <p>© 2024 PipexAI. Built for engineers who value safety and speed.</p>
+          <p>© 2026 PipexAI. Built for engineers who value safety and speed.</p>
         </div>
       </footer>
 
