@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import apiClient from "../lib/api";
 
-// Types (keep your existing interfaces)
 interface Repository {
   _id: string;
   repoName: string;
@@ -94,7 +93,6 @@ export default function DashboardPage() {
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
   const [expandedAuditLog, setExpandedAuditLog] = useState<string | null>(null);
 
-  // Add this debugging useEffect
   useEffect(() => {
     console.log("🔍 Debug: Issues data structure:", {
       totalIssues: issues.length,
@@ -161,7 +159,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Safe JSON stringify for audit log details
   const safeStringifyDetails = (details: any): string => {
     if (!details) return "No details";
     if (typeof details === "string") return details;
@@ -243,7 +240,6 @@ export default function DashboardPage() {
       if (!githubConnected) {
         console.log("⚠️ GitHub not connected, checking connection status...");
 
-        // Debug: Check actual connection status
         try {
           const debugInfo = await apiClient.debugGitHubConnection();
           console.log("🔍 GitHub connection debug:", debugInfo.debug);
@@ -265,9 +261,7 @@ export default function DashboardPage() {
         }
       }
 
-      console.log("🔄 Calling sync endpoint...");
 
-      // Call the sync endpoint
       const result = await apiClient.syncRepositories();
 
       console.log("✅ Sync result:", result);
@@ -350,7 +344,6 @@ export default function DashboardPage() {
         );
       }
 
-      // Refresh all data to show new issues and audit logs
       await fetchAllData();
     } catch (error: any) {
       console.error("❌ Failed to analyze repository:", error);
@@ -380,7 +373,6 @@ export default function DashboardPage() {
       // Refresh data to update issue, PR lists, and audit logs
       await fetchAllData();
 
-      // Switch to PRs tab to show the new PR
       setActiveTab("prs");
     } catch (error: any) {
       console.error("❌ Failed to fix issue:", error);
