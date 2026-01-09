@@ -7,19 +7,19 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("🔐 AuthCallback: Processing OAuth response");
-    console.log("🔐 Full URL:", window.location.href);
+    // console.log("🔐 AuthCallback: Processing OAuth response");
+    // console.log("🔐 Full URL:", window.location.href);
 
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
     const error = urlParams.get("error");
 
-    console.log("🔐 Token from URL:", token ? "PRESENT" : "MISSING");
-    console.log("🔐 Token length:", token?.length || 0);
-    console.log(
-      "🔐 Token preview:",
-      token ? `${token.substring(0, 30)}...` : "null"
-    );
+    // console.log("🔐 Token from URL:", token ? "PRESENT" : "MISSING");
+    // console.log("🔐 Token length:", token?.length || 0);
+    // console.log(
+    //   "🔐 Token preview:",
+    //   token ? `${token.substring(0, 30)}...` : "null"
+    // );
 
     if (error) {
       console.error("❌ OAuth error:", error);
@@ -28,23 +28,23 @@ export default function AuthCallback() {
     }
 
     if (token) {
-      console.log("✅ Storing token in localStorage and apiClient");
+      // console.log("✅ Storing token in localStorage and apiClient");
 
       // Store in localStorage
       localStorage.setItem("auth_token", token);
 
       apiClient.setToken(token);
 
-      console.log(
-        "✅ Token stored. Verifying:",
-        localStorage.getItem("auth_token") ? "SUCCESS" : "FAILED"
-      );
+      // console.log(
+      //   "✅ Token stored. Verifying:",
+      //   localStorage.getItem("auth_token") ? "SUCCESS" : "FAILED"
+      // );
 
       window.history.replaceState({}, document.title, window.location.pathname);
       console.log("✅ URL cleaned");
 
       setTimeout(() => {
-        console.log("🔄 Redirecting to dashboard...");
+        // console.log("🔄 Redirecting to dashboard...");
         navigate("/dashboard");
       }, 100);
     } else {

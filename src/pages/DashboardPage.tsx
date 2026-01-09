@@ -67,11 +67,11 @@ interface AuditLog {
   riskLevel: string;
   approved: boolean;
   timestamp: string;
-  details?: any; 
+  details?: any;
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null); 
+  const [user, setUser] = useState<any>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
@@ -93,28 +93,28 @@ export default function DashboardPage() {
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
   const [expandedAuditLog, setExpandedAuditLog] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log("🔍 Debug: Issues data structure:", {
-      totalIssues: issues.length,
-      firstIssue: issues[0]
-        ? {
-            id: issues[0]._id,
-            repositoryId: issues[0].repositoryId,
-            repositoryIdType: typeof issues[0].repositoryId,
-            repositoryIdIsObject: typeof issues[0].repositoryId === "object",
-            repositoryIdKeys:
-              typeof issues[0].repositoryId === "object"
-                ? Object.keys(issues[0].repositoryId)
-                : "not an object",
-          }
-        : "no issues",
-    });
+  // useEffect(() => {
+  // console.log("🔍 Debug: Issues data structure:", {
+  //   totalIssues: issues.length,
+  //   firstIssue: issues[0]
+  //     ? {
+  //         id: issues[0]._id,
+  //         repositoryId: issues[0].repositoryId,
+  //         repositoryIdType: typeof issues[0].repositoryId,
+  //         repositoryIdIsObject: typeof issues[0].repositoryId === "object",
+  //         repositoryIdKeys:
+  //           typeof issues[0].repositoryId === "object"
+  //             ? Object.keys(issues[0].repositoryId)
+  //             : "not an object",
+  //       }
+  //     : "no issues",
+  // });
 
-    console.log("🔍 Debug: Repositories data:", {
-      totalRepos: repositories.length,
-      firstRepo: repositories[0],
-    });
-  }, [issues, repositories]);
+  // console.log("🔍 Debug: Repositories data:", {
+  //   totalRepos: repositories.length,
+  //   firstRepo: repositories[0],
+  // });
+  // }, [issues, repositories]);
 
   // ==================== 2. UTILITY FUNCTIONS ====================
   const showToast = (type: "success" | "error" | "info", message: string) => {
@@ -187,7 +187,7 @@ export default function DashboardPage() {
       // Fetch pull requests
       const prsData = await apiClient.getPullRequests();
       setPullRequests(prsData.pullRequests || []);
-    
+
       // Fetch audit logs
       const auditData = await apiClient.getAuditLogs({ limit: 50 });
       setAuditLogs(auditData.logs || []);
@@ -260,7 +260,6 @@ export default function DashboardPage() {
           return;
         }
       }
-
 
       const result = await apiClient.syncRepositories();
 
@@ -419,7 +418,7 @@ export default function DashboardPage() {
         const githubUsername = urlParams.get("username");
 
         if (githubConnectedParam === "true") {
-          console.log("✅ GitHub connected successfully:", githubUsername);
+          // console.log("✅ GitHub connected successfully:", githubUsername);
           showToast("success", `GitHub connected as @${githubUsername}!`);
           setGithubConnected(true);
 
@@ -456,16 +455,16 @@ export default function DashboardPage() {
           return;
         }
 
-        console.log("🔐 Dashboard: Token exists, fetching user...");
+        // console.log("🔐 Dashboard: Token exists, fetching user...");
 
         const { user } = await apiClient.getCurrentUser();
-        console.log("✅ User fetched:", user.email);
+        // console.log("✅ User fetched:", user.email);
         setUser(user);
 
         try {
           const { isConnected } = await apiClient.getGitHubStatus();
           setGithubConnected(isConnected);
-          console.log("✅ GitHub connection status:", isConnected);
+          // console.log("✅ GitHub connection status:", isConnected);
         } catch (error) {
           console.log("ℹ️ GitHub not connected yet");
         }
