@@ -45,12 +45,13 @@ export default defineConfig([
 ])
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x), [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom), and [eslint-plugin-react-hooks](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks) for React-specific lint rules:
 
 ```js
 // eslint.config.js
 import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'
+import reactHooks from 'eslint-plugin-react-hooks'
 
 export default defineConfig([
   globalIgnores(['dist']),
@@ -62,6 +63,8 @@ export default defineConfig([
       reactX.configs['recommended-typescript'],
       // Enable lint rules for React DOM
       reactDom.configs.recommended,
+      // Enable lint rules for React Hooks
+      reactHooks.configs.recommended,
     ],
     languageOptions: {
       parserOptions: {
@@ -72,4 +75,3 @@ export default defineConfig([
     },
   },
 ])
-```
