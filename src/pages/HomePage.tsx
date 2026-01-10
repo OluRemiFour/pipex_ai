@@ -231,7 +231,7 @@ export default function HomePage() {
               <button
                 onClick={handleConnectRepo}
                 disabled={connecting}
-                className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center gap-1 cursor-pointer sm:w-auto px-8 py-4 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors"
               >
                 {connecting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
