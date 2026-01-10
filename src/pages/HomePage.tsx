@@ -1,25 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Shield,
-  GitPullRequest,
-  Zap,
-  Eye,
-  CheckCircle,
   ArrowRight,
-  Code2,
-  Server,
-  GitBranch,
-  X,
-  Github,
-  Loader2,
+  CheckCircle,
   CheckCircle2,
-  XCircle,
+  Code2,
+  Eye,
+  GitBranch,
+  Github,
+  GitPullRequest,
   Info,
+  Loader2,
+  Server,
+  Shield,
+  X,
+  XCircle,
+  Zap,
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { lumi } from "../lib/lumi";
 
 export default function HomePage() {
   const [typedText, setTypedText] = useState("");
