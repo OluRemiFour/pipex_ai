@@ -75,7 +75,7 @@ export default function HomePage() {
         return;
       }
 
-      console.log("✅ Token found, initiating GitHub OAuth");
+      // console.log("Token found, initiating GitHub OAuth");
 
       const apiBaseUrl =
         import.meta.env.VITE_API_BASE_URL ||
